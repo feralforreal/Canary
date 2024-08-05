@@ -1,0 +1,458 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.keys import Keys
+import traceback
+
+class ChecklistTests:
+    def __init__(self, driver):
+        self.driver = driver
+        self.url = "URL_OF_THE_APPLICATION"
+
+    def navigate_to_application(self):
+        self.driver.get(self.url)
+
+    def validate_checklist_list(self):
+        try:
+            self.driver.find_element(By.ID, "checklist").click()
+            table_headers = self.driver.find_elements(By.XPATH, "//table[@id='checklist_table']//th")
+            expected_headers = ["Checklist Type", "Version", "Active From Date", "Status", "Remarks", "Actions", "Create New Checklist"]
+            assert all(header.text in expected_headers for header in table_headers), "Checklist list headers do not match expected headers"
+            print("TG1-Checklist-1 passed")
+        except Exception as e:
+            print("TG1-Checklist-1 failed")
+            traceback.print_exc()
+
+    def validate_create_checklist_screen(self):
+        try:
+            self.driver.find_element(By.ID, "checklist").click()
+            self.driver.find_element(By.ID, "create_new_checklist").click()
+            fields = {
+                "Checklist Type": Select(self.driver.find_element(By.ID, "checklist_type")),
+                "Description": self.driver.find_element(By.ID, "description"),
+                "Sub Description": self.driver.find_element(By.ID, "sub_description"),
+                "Submit": self.driver.find_element(By.ID, "submit"),
+                "Cancel": self.driver.find_element(By.ID, "cancel")
+            }
+            assert all(field in fields for field in fields.keys()), "Create Checklist screen fields are not as expected"
+            print("TG1-Checklist-2 passed")
+        except Exception as e:
+            print("TG1-Checklist-2 failed")
+            traceback.print_exc()
+
+    def validate_placeholder_in_create_checklist(self):
+        try:
+            self.driver.find_element(By.ID, "checklist").click()
+            self.driver.find_element(By.ID, "create_new_checklist").click()
+            placeholders = {
+                "checklist_type": "Select Checklist Type",
+                "description": "Description",
+                "sub_description": "Sub Description"
+            }
+            for field, expected_placeholder in placeholders.items():
+                actual_placeholder = self.driver.find_element(By.ID, field).get_attribute("placeholder")
+                assert actual_placeholder == expected_placeholder, f"Placeholder for {field} is not as expected"
+            print("TG1-Checklist-3 passed")
+        except Exception as e:
+            print("TG1-Checklist-3 failed")
+            traceback.print_exc()
+
+    def validate_checklist_type(self):
+        try:
+            self.driver.find_element(By.ID, "checklist").click()
+            self.driver.find_element(By.ID, "create_new_checklist").click()
+            self.driver.find_element(By.ID, "checklist_type").click()
+            checklists = self.driver.find_elements(By.XPATH, "//select[@id='checklist_type']/option")
+            assert len(checklists) > 0, "No checklists found in Checklist Type dropdown"
+            print("TG1-Checklist-4 passed")
+        except Exception as e:
+            print("TG1-Checklist-4 failed")
+            traceback.print_exc()
+
+    def validate_creation_of_checklist(self):
+        try:
+            self.driver.find_element(By.ID, "checklist").click()
+            self.driver.find_element(By.ID, "create_new_checklist").click()
+            Select(self.driver.find_element(By.ID, "checklist_type")).select_by_visible_text("Type 1")
+            self.driver.find_element(By.ID, "description").send_keys("Test Description")
+            self.driver.find_element(By.ID, "add_button").click()
+            self.driver.find_element(By.ID, "description_1").send_keys("Sub Description 1")
+            self.driver.find_element(By.ID, "check_box_1").click()
+            self.driver.find_element(By.ID, "plus_button").click()
+            self.driver.find_element(By.ID, "sub_description_2").send_keys("Sub Description 2")
+            self.driver.find_element(By.ID, "submit").click()
+            assert self.driver.find_element(By.ID, "authenticate_popup").is_displayed(), "Authenticate pop-up screen not displayed"
+            print("TG1-Checklist-5 passed")
+        except Exception as e:
+            print("TG1-Checklist-5 failed")
+            traceback.print_exc()
+
+    def validate_authenticate_popup_screen(self):
+        try:
+            self.validate_creation_of_checklist()
+            popup_fields = {
+                "password": self.driver.find_element(By.ID, "password"),
+                "eye_icon": self.driver.find_element(By.ID, "eye_icon"),
+                "authenticate": self.driver.find_element(By.ID, "authenticate"),
+                "cross_icon": self.driver.find_element(By.ID, "cross_icon")
+            }
+            assert all(field in popup_fields for field in popup_fields.keys()), "Authenticate pop-up screen fields are not as expected"
+            print("TG1-Checklist-6 passed")
+        except Exception as e:
+            print("TG1-Checklist-6 failed")
+            traceback.print_exc()
+
+    def validate_eye_icon_view_password(self):
+        try:
+            self.validate_creation_of_checklist()
+            self.driver.find_element(By.ID, "password").send_keys("admin")
+            self.driver.find_element(By.ID, "eye_icon").click()
+            password_field_type = self.driver.find_element(By.ID, "password").get_attribute("type")
+            assert password_field_type == "text", "Password is not visible"
+            print("TG1-Checklist-7 passed")
+        except Exception as e:
+            print("TG1-Checklist-7 failed")
+            traceback.print_exc()
+
+    def validate_eye_icon_close_password_view(self):
+        try:
+            self.validate_creation_of_checklist()
+            self.driver.find_element(By.ID, "password").send_keys("admin")
+            self.driver.find_element(By.ID, "eye_icon").click()
+            self.driver.find_element(By.ID, "eye_icon").click()
+            password_field_type = self.driver.find_element(By.ID, "password").get_attribute("type")
+            assert password_field_type == "password", "Password is still visible"
+            print("TG1-Checklist-8 passed")
+        except Exception as e:
+            print("TG1-Checklist-8 failed")
+            traceback.print_exc()
+
+    def validate_cross_icon(self):
+        try:
+            self.validate_creation_of_checklist()
+            self.driver.find_element(By.ID, "cross_icon").click()
+            assert not self.driver.find_element(By.ID, "authenticate_popup").is_displayed(), "Authenticate pop-up screen is not closed"
+            print("TG1-Checklist-9 passed")
+        except Exception as e:
+            print("TG1-Checklist-9 failed")
+            traceback.print_exc()
+
+    def validate_authentication(self):
+        try:
+            self.validate_creation_of_checklist()
+            self.driver.find_element(By.ID, "password").send_keys("admin")
+            self.driver.find_element(By.ID, "authenticate").click()
+            toaster_message = self.driver.find_element(By.CLASS_NAME, "toaster-message").text
+            assert "Checklist created successfully" in toaster_message, "Authentication failed"
+            assert self.driver.current_url.endswith("/checklist"), "Redirection to Checklist page failed"
+            print("TG1-Checklist-10 passed")
+        except Exception as e:
+            print("TG1-Checklist-10 failed")
+            traceback.print_exc()
+
+    def validate_status_after_checklist_creation(self):
+        try:
+            self.validate_creation_of_checklist()
+            self.driver.find_element(By.ID, "password").send_keys("admin")
+            self.driver.find_element(By.ID, "authenticate").click()
+            toaster_message = self.driver.find_element(By.CLASS_NAME, "toaster-message").text
+            assert "Checklist created successfully" in toaster_message, "Authentication failed"
+            status = self.driver.find_element(By.ID, "checklist_status").text
+            assert status == "Draft", "Checklist status is not 'Draft'"
+            print("TG1-Checklist-11 passed")
+        except Exception as e:
+            print("TG1-Checklist-11 failed")
+            traceback.print_exc()
+
+    def validate_checklist_type_duplication(self):
+        try:
+            self.driver.find_element(By.ID, "checklist").click()
+            self.driver.find_element(By.ID, "create_new_checklist").click()
+            checklists = [option.text for option in Select(self.driver.find_element(By.ID, "checklist_type")).options]
+            assert len(checklists) == len(set(checklists)), "Duplicate checklist types found"
+            print("TG1-Checklist-12 passed")
+        except Exception as e:
+            print("TG1-Checklist-12 failed")
+            traceback.print_exc()
+
+    def validate_creation_without_description(self):
+        try:
+            self.driver.find_element(By.ID, "checklist").click()
+            self.driver.find_element(By.ID, "create_new_checklist").click()
+            Select(self.driver.find_element(By.ID, "checklist_type")).select_by_visible_text("Type 1")
+            self.driver.find_element(By.ID, "submit").click()
+            error_message = self.driver.find_element(By.CLASS_NAME, "error-message").text
+            assert "Description is not entered" in error_message, "Error message not displayed for missing description"
+            print("TG1-Checklist-13 passed")
+        except Exception as e:
+            print("TG1-Checklist-13 failed")
+            traceback.print_exc()
+
+    def validate_creation_without_sub_description(self):
+        try:
+            self.driver.find_element(By.ID, "checklist").click()
+            self.driver.find_element(By.ID, "create_new_checklist").click()
+            Select(self.driver.find_element(By.ID, "checklist_type")).select_by_visible_text("Type 1")
+                        self.driver.find_element(By.ID, "description").send_keys("Test Description")
+            self.driver.find_element(By.ID, "submit").click()
+            error_message = self.driver.find_element(By.CLASS_NAME, "error-message").text
+            assert "Sub Description is not entered" in error_message, "Error message not displayed for missing sub description"
+            print("TG1-Checklist-14 passed")
+        except Exception as e:
+            print("TG1-Checklist-14 failed")
+            traceback.print_exc()
+
+    def validate_creation_without_checklist_type(self):
+        try:
+            self.driver.find_element(By.ID, "checklist").click()
+            self.driver.find_element(By.ID, "create_new_checklist").click()
+            self.driver.find_element(By.ID, "description").send_keys("Test Description")
+            self.driver.find_element(By.ID, "submit").click()
+            error_message = self.driver.find_element(By.CLASS_NAME, "error-message").text
+            assert "Checklist Type is not selected" in error_message, "Error message not displayed for missing checklist type"
+            print("TG1-Checklist-15 passed")
+        except Exception as e:
+            print("TG1-Checklist-15 failed")
+            traceback.print_exc()
+
+    def validate_cancel_button(self):
+        try:
+            self.driver.find_element(By.ID, "checklist").click()
+            self.driver.find_element(By.ID, "create_new_checklist").click()
+            self.driver.find_element(By.ID, "cancel").click()
+            assert self.driver.current_url.endswith("/checklist_list"), "Redirection to Checklist List failed after cancel"
+            print("TG1-Checklist-16 passed")
+        except Exception as e:
+            print("TG1-Checklist-16 failed")
+            traceback.print_exc()
+
+    def validate_return_action_button(self):
+        try:
+            # Click on Return icon in Actions in the Checklist List
+            self.driver.find_element(By.ID, "return_icon").click()
+            
+            # Wait for Reason for Return pop-up to be displayed
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "reason-for-return-popup"))
+            )
+            
+            # Check if the Reason for Return pop-up screen is displayed
+            popup_displayed = self.driver.find_element(By.CLASS_NAME, "reason-for-return-popup").is_displayed()
+            assert popup_displayed, "Reason for Return pop-up screen not displayed"
+            print("TG1-Checklist-27 passed")
+        except Exception as e:
+            print("TG1-Checklist-27 failed")
+            traceback.print_exc()
+
+    def validate_reason_for_return_popup_screen(self):
+        try:
+            # Click on Return icon in Actions in the Checklist List
+            self.driver.find_element(By.ID, "return_icon").click()
+            
+            # Wait for Reason for Return pop-up to be displayed
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "reason-for-return-popup"))
+            )
+            
+            # Check if the Reason for Return pop-up screen fields are correct
+            popup_elements = [
+                self.driver.find_element(By.ID, "remarks").get_attribute("placeholder") == "Remarks",
+                self.driver.find_element(By.ID, "submit_button"),
+                self.driver.find_element(By.ID, "close_button")
+            ]
+            assert all(popup_elements), "Reason for Return pop-up screen fields are incorrect"
+            print("TG1-Checklist-28 passed")
+        except Exception as e:
+            print("TG1-Checklist-28 failed")
+            traceback.print_exc()
+
+    def validate_close_button_reason_for_return(self):
+        try:
+            # Click on Return icon in Actions in the Checklist List
+            self.driver.find_element(By.ID, "return_icon").click()
+            
+            # Wait for Reason for Return pop-up to be displayed
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "reason-for-return-popup"))
+            )
+            
+            # Click on Close button
+            self.driver.find_element(By.ID, "close_button").click()
+            
+            # Check if the Reason for Return pop-up screen is closed
+            popup_closed = not self.driver.find_element(By.CLASS_NAME, "reason-for-return-popup").is_displayed()
+            assert popup_closed, "Reason for Return pop-up screen not closed"
+            print("TG1-Checklist-29 passed")
+        except Exception as e:
+            print("TG1-Checklist-29 failed")
+            traceback.print_exc()
+
+    def validate_return_without_remarks(self):
+        try:
+            # Click on Return icon in Actions in the Checklist List
+            self.driver.find_element(By.ID, "return_icon").click()
+            
+            # Wait for Reason for Return pop-up to be displayed
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "reason-for-return-popup"))
+            )
+            
+            # Click on Submit button without entering remarks
+            self.driver.find_element(By.ID, "submit_button").click()
+            
+            # Check if the error message is displayed
+            error_message = self.driver.find_element(By.CLASS_NAME, "error-message").text
+            assert "Remarks is not entered" in error_message, "Error message not displayed for missing remarks"
+            print("TG1-Checklist-30 passed")
+        except Exception as e:
+            print("TG1-Checklist-30 failed")
+            traceback.print_exc()
+
+    def validate_return_with_remarks(self):
+        try:
+            # Click on Return icon in Actions in the Checklist List
+            self.driver.find_element(By.ID, "return_icon").click()
+            
+            # Wait for Reason for Return pop-up to be displayed
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "reason-for-return-popup"))
+            )
+            
+            # Enter remarks and click on Submit button
+            self.driver.find_element(By.ID, "remarks").send_keys("Test Remarks")
+            self.driver.find_element(By.ID, "submit_button").click()
+            
+            # Check if the Authenticate pop-up screen is displayed
+            popup_displayed = self.driver.find_element(By.CLASS_NAME, "authenticate-popup").is_displayed()
+            assert popup_displayed, "Authenticate pop-up screen not displayed"
+            print("TG1-Checklist-31 passed")
+        except Exception as e:
+            print("TG1-Checklist-31 failed")
+            traceback.print_exc()
+
+    def validate_return_authentication(self):
+        try:
+            # Click on Return icon in Actions in the Checklist List
+            self.driver.find_element(By.ID, "return_icon").click()
+            
+            # Wait for Reason for Return pop-up to be displayed
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "reason-for-return-popup"))
+            )
+            
+            # Enter remarks and click on Submit button
+            self.driver.find_element(By.ID, "remarks").send_keys("Test Remarks")
+            self.driver.find_element(By.ID, "submit_button").click()
+            
+            # Enter password and click on Authenticate button
+            self.driver.find_element(By.ID, "password").send_keys("valid_password")
+            self.driver.find_element(By.ID, "authenticate_button").click()
+            
+            # Check if the success message is displayed
+            success_message = self.driver.find_element(By.CLASS_NAME, "toaster-message").text
+            assert "Checklist returned successfully" in success_message, "Checklist return success message not displayed"
+            print("TG1-Checklist-32 passed")
+        except Exception as e:
+            print("TG1-Checklist-32 failed")
+            traceback.print_exc()
+
+    def validate_status_and_remarks_after_return(self):
+        try:
+            # Click on Return icon in Actions in the Checklist List
+            self.driver.find_element(By.ID, "return_icon").click()
+            
+            # Wait for Reason for Return pop-up to be displayed
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "reason-for-return-popup"))
+            )
+            
+            # Enter remarks and click on Submit button
+            self.driver.find_element(By.ID, "remarks").send_keys("Test Remarks")
+            self.driver.find_element(By.ID, "submit_button").click()
+            
+            # Enter password and click on Authenticate button
+            self.driver.find_element(By.ID, "password").send_keys("valid_password")
+            self.driver.find_element(By.ID, "authenticate_button").click()
+            
+            # Check the status and remarks
+            status = self.driver.find_element(By.ID, "status").text
+            remarks = self.driver.find_element(By.ID, "remarks_display").text
+            assert status == "Returned by Reviewer" and remarks == "Test Remarks", "Status or remarks not correctly updated"
+            print("TG1-Checklist-33 passed")
+        except Exception as e:
+            print("TG1-Checklist-33 failed")
+            traceback.print_exc()
+
+    def validate_action_buttons_after_return(self):
+        try:
+            # Check action buttons after checklist is returned
+            action_buttons = self.driver.find_elements(By.CLASS_NAME, "action-button")
+            button_texts = [button.text for button in action_buttons]
+            expected_buttons = ["View", "Edit"]
+            assert all(button in button_texts for button in expected_buttons), "Action buttons after return are incorrect"
+            print("TG1-Checklist-34 passed")
+        except Exception as e:
+            print("TG1-Checklist-34 failed")
+            traceback.print_exc()
+
+    def validate_edit_action_button(self):
+        try:
+            # Click on Edit icon in Actions in the Checklist List
+            self.driver.find_element(By.ID, "edit_icon").click()
+            
+            # Check if the Edit Checklist screen is displayed
+            edit_page_displayed = self.driver.find_element(By.CLASS_NAME, "edit-checklist-page").is_displayed()
+            assert edit_page_displayed, "Edit Checklist screen not displayed"
+            print("TG1-Checklist-35 passed")
+        except Exception as e:
+            print("TG1-Checklist-35 failed")
+            traceback.print_exc()
+
+    def validate_update_button(self):
+        try:
+            # Click on Edit icon in Actions in the Checklist List
+            self.driver.find_element(By.ID, "edit_icon").click()
+            
+            # Remove one Sub Description and Main Description
+            sub_descriptions = self.driver.find_elements(By.CLASS_NAME, "sub-description")
+            if sub_descriptions:
+                sub_descriptions[0].find_element(By.CLASS_NAME, "remove-button").click()
+            main_descriptions = self.driver.find_elements(By.CLASS_NAME, "main-description")
+            if main_descriptions:
+                main_descriptions[0].find_element(By.CLASS_NAME, "remove-button").click()
+            
+            # Click on Update button
+            self.driver.find_element(By.ID, "update_button").click()
+            
+            # Check if the Authenticate pop-up screen is displayed
+            popup_displayed = self.driver.find_element(By.CLASS_NAME, "authenticate-popup").is_displayed()
+            assert popup_displayed, "Authenticate pop-up screen not displayed"
+            print("TG1-Checklist-36 passed")
+        except Exception as e:
+            print("TG1-Checklist-36 failed")
+            traceback.print_exc()
+
+if __name__ == "__main__":
+    driver = webdriver.Chrome()
+    checklist_tests = ChecklistTests(driver)
+    checklist_tests.navigate_to_application()
+    checklist_tests.validate_checklist_list()
+    checklist_tests.validate_create_checklist_screen()
+    checklist_tests.validate_placeholder_in_create_checklist()
+    checklist_tests.validate_checklist_type()
+    checklist_tests.validate_creation_of_checklist()
+    checklist_tests.validate_authenticate_popup_screen()
+    checklist_tests.validate_eye_icon_view_password()
+    checklist_tests.validate_eye_icon_close_password_view()
+    checklist_tests.validate_cross_icon()
+    checklist_tests.validate_authentication()
+    checklist_tests.validate_status_after_checklist_creation()
+    checklist_tests.validate_checklist_type_duplication()
+    checklist_tests.validate_creation_without_description()
+    checklist_tests.validate_creation_without_sub_description()
+    checklist_tests.validate_creation_without_checklist_type()
+    checklist_tests.validate_cancel_button()
+
+
+
+    driver.quit()
